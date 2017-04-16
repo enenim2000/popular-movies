@@ -58,8 +58,12 @@ public class DetailActivity extends AppCompatActivity {
         tv_ExtraReleaseDate.setText(movie.getReleaseDate());
         //tv_ExtraTitle.setText(movie.getTitle());
 
+        String imageFullPath = Config.IMAGE_BASE_URL + movie.getPosterPath();
+
+        Log.d(TAG, imageFullPath);
+
         Picasso.with(this)
-                .load(Config.IMAGE_BASE_URL + movie.getPosterPath())
+                .load(imageFullPath)
                 .into(tvMoviePoster);
 
     }

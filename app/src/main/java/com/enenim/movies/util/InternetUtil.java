@@ -56,8 +56,4 @@ public class InternetUtil{
                 .setMessage(message)
                 .setIcon(icon);
     }
-
-    public static void showToast(Context context, String message, int length) {
-        Toast.makeText(context, message, length).show();
-    }
 }
