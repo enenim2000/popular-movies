@@ -1,5 +1,6 @@
 package com.enenim.movies;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -11,16 +12,20 @@ import com.enenim.movies.config.Config;
 import com.enenim.movies.model.Movie;
 import com.squareup.picasso.Picasso;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 /**
  * Created by enenim on 4/13/17.
  */
 
 public class DetailActivity extends AppCompatActivity {
     private static final String TAG = DetailActivity.class.getSimpleName();
+
+    /*
+    * This field is used for data binding. Normally, we would have to call findViewById many
+    * times to get references to the Views in this Activity. With data binding however, we only
+    * need to call DataBindingUtil.setContentView and pass in a Context and a layout, as we do
+    * in onCreate of this class. Then, we can access all of the Views in our layout
+    * programmatically without cluttering up the code with findViewById.
+    */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +35,20 @@ public class DetailActivity extends AppCompatActivity {
         View includePrimaryMovieInfo = findViewById(R.id.primary_info);
         View includeExtraMovieInfo = findViewById(R.id.extra_details);
 
-        final Movie movie = (Movie)getIntent().getSerializableExtra(Config.MOVIE_KEY);
-        final int appLabel = getIntent().getIntExtra(Config.APP_LABEL_KEY, R.string.popular_movie_label);
+        Intent intent = getIntent();
+        Movie movie = null;
+        int appLabel = -1;
+
+        if(intent.hasExtra(Config.MOVIE_KEY)){
+            movie = (Movie)intent.getSerializableExtra(Config.MOVIE_KEY);
+        }
+
+        if(intent.hasExtra(Config.APP_LABEL_KEY)){
+            appLabel = intent.getIntExtra(Config.APP_LABEL_KEY, R.string.popular_movie_label);
+        }
+
+
+
         this.setTitle(appLabel);
         Log.d(TAG, movie.getPosterPath());
 
@@ -64,6 +81,8 @@ public class DetailActivity extends AppCompatActivity {
 
         Picasso.with(this)
                 .load(imageFullPath)
+                .placeholder(R.drawable.test)
+                .error(R.drawable.test)
                 .into(tvMoviePoster);
 
     }

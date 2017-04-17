@@ -6,6 +6,10 @@
 
     <!-- Icon Sizes -->
     <dimen name="list_icon">40dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!--Floating action button-->
+    <dimen name="design_fab_image_size" override="true">26dp</dimen>
 
     <!-- We will eventually use this to allow us to add additional padding for different screen
          sizes-->

@@ -11,5 +11,9 @@
     <string name="title_activity_detail">Details</string>
     <string name="no_network_message">Please connect to a Wi-Fi or mobile network</string>
     <string name="action_settings">Settings</string>
+    <string name="current_of">of</string>
+    <string name="current_page">Page</string>
+    <string name="no_setting_app">No settings app installed on your device</string>
+    <string name="current_default_info">1 of 10</string>
     <string name="no_api_key_message">Please obtain your API KEY first from themoviedb.org and paste it in Config.API_KEY</string>
 </resources>

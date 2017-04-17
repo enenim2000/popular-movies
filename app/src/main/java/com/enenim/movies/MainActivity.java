@@ -2,8 +2,11 @@ package com.enenim.movies;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -38,9 +41,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
     private ProgressBar mLoadingIndicator;
 
+    private FloatingActionButton fab_forward;
+    private FloatingActionButton fab_backward;
+    private String current_page_info;
+    private MenuItem menuInfo;
+
     private int defaultVal = R.string.most_popular; //default, popular movies
 
     private int app_label = R.string.popular_movie_label;
+
+    private int page = 1; //default page
+    private int id;
+    private int maxPage = 10;
+    private int firstPage = 1;
 
     private  boolean connected = false;
 
@@ -48,6 +61,35 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ColorStateList csl = new ColorStateList(new int[][] { new int[0] }, new int[]{Color.parseColor("#000080") });
+
+        fab_forward = (FloatingActionButton) findViewById(R.id.fab_forward);
+        fab_forward.setVisibility(View.INVISIBLE);
+
+        fab_forward.setBackgroundTintList(csl);
+        fab_forward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(page < maxPage){
+                    page = page + 1;
+                    execute(defaultVal);
+                }
+            }
+        });
+
+        fab_backward = (FloatingActionButton) findViewById(R.id.fab_backward);
+        fab_backward.setVisibility(View.INVISIBLE);
+        fab_backward.setBackgroundTintList(csl);
+        fab_backward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(page > firstPage){
+                    page = page - 1;
+                    execute(defaultVal);
+                }
+            }
+        });
 
         if (Config.API_KEY.isEmpty()) {
             //Toast.makeText(getApplicationContext(), R.string.no_api_key_message, Toast.LENGTH_LONG).show();
@@ -61,7 +103,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         connected = InternetUtil.isNetworkConnected(this);
 
         if (connected) {
-
             mRecyclerView = (RecyclerView) findViewById(R.id.recyclerview_movie);
 
             GridLayoutManager layoutManager
@@ -82,7 +123,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                     .setPositiveButton(R.string.action_settings, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            startActivity(new Intent(Settings.ACTION_SETTINGS));
+                            Intent intent = new Intent(Settings.ACTION_SETTINGS);
+
+                            if (intent.resolveActivity(getPackageManager()) != null) {
+                                startActivity(intent);
+                            }else{
+                                InternetUtil.showDialog(MainActivity.this, android.R.drawable.ic_dialog_alert, R.string.no_setting_app)
+                                        .show();
+                            }
                         }
                     })
                     .show();
@@ -121,27 +169,42 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         inflater.inflate(R.menu.menu_main, menu);
         /* Return true so that the menu is displayed in the Toolbar */
 
-        //Show menu items only if internet connection is available
+        /* Show menu items only if internet connection is available */
         return connected;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
 
-        int id = menuItem.getItemId();
+        id = menuItem.getItemId();
+        page = firstPage;
         if(defaultVal != id){
             if(id == R.id.action_most_popular){
                 //Toast.makeText(MainActivity.this, "Load Most Popular Movies", Toast.LENGTH_LONG).show();
-                execute(R.id.action_most_popular);
+                execute(id);
+
+                return true;
             }
             if(id == R.id.action_top_rated){
                 //Toast.makeText(MainActivity.this, "Load Top Rated Movies ", Toast.LENGTH_LONG).show();
-                execute(R.id.action_top_rated);
+                execute(id);
+
+                return true;
             }
         }
 
         return  super.onOptionsItemSelected(menuItem);
     }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        menuInfo = menu.findItem(R.id.current_page_info);
+        menuInfo.setTitle(this.current_page_info);
+        //menuInfo.setEnabled(false);
+        return true;
+    }
+
 
     public void execute(int selectedMenuType){
         defaultVal = selectedMenuType;
@@ -149,24 +212,43 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mLoadingIndicator.setVisibility(View.VISIBLE);
         mMovieAdapter.setMovies(null);
 
+        if(!(page == firstPage)){
+            fab_backward.setVisibility(View.VISIBLE);
+        }else {
+            fab_backward.setVisibility(View.INVISIBLE);
+        }
+
+        if(!(page == maxPage)){
+            fab_forward.setVisibility(View.VISIBLE);
+        }else {
+            fab_forward.setVisibility(View.INVISIBLE);
+        }
+
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
 
         Call<MoviesResponse> call;
         if(selectedMenuType == R.id.action_most_popular){
             app_label = R.string.popular_movie_label;
-            call = apiService.getPopularMovies(Config.API_KEY);
+            call = apiService.getPopularMovies(Config.API_KEY, page);
         }else if (selectedMenuType == R.id.action_top_rated) {
             app_label = R.string.top_movie_label;
-            call = apiService.getTopRatedMovies(Config.API_KEY);
+            call = apiService.getTopRatedMovies(Config.API_KEY, page);
         }else {
             app_label = R.string.popular_movie_label;
-            call = apiService.getPopularMovies(Config.API_KEY);
+            call = apiService.getPopularMovies(Config.API_KEY, page);
         }
+
+        //current_page_info = R.string.current_page + " ( " + page + " " + R.string.current_of + " " + maxPage + " ) ";
+
+        this.current_page_info = page + " " + "of" + " " + maxPage;
 
         call.enqueue(new Callback<MoviesResponse>() {
             @Override
             public void onResponse(Call<MoviesResponse>call, Response<MoviesResponse> response) {
                 MainActivity.this.setTitle(app_label);
+
+                //Call to refresh menu in order to update menuInfo in onPrepareOptionsMenu(Menu menu)
+                invalidateOptionsMenu();
 
                 movies = response.body().getResults();
 
